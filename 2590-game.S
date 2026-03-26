@@ -21,7 +21,7 @@ Main:
   PUSH  {R4-R5,LR}
 
 
-  @
+  @ 
   @ Prepare GPIO Port E Pin 9 for output (LED LD3)
   @ We'll blink LED LD3 (the orange LED)
   @
@@ -188,3 +188,22 @@ blink_countdown:
   .space  4
 
   .end
+
+
+@@@ main game 
+maingame:
+
+end_maingame:
+
+menu:
+
+outputpattern:
+  LDR     R4, =GPIOE_MODER
+  LDR     R5, [R4]
+  BIC     R5, #(0b11<<(LD3_PIN*2))      @ Modify ...
+  ORR     R5, #(0b01<<(LD3_PIN*2))      @ write 01 to bits 
+  STR     R5, [R4]                      @ Write
+  LDR     R5, [R4]
+  BIC     R5, #(0b11<<(LD3_PIN*2))      @ Modify ...
+  ORR     R5, #(0b01<<(LD3_PIN*2))      @ write 01 to bits 
+  STR     R5, [R4]                      @ Write  
