@@ -191,19 +191,241 @@ blink_countdown:
 
 
 @@@ main game 
-maingame:
+MainGame:
+
+  level = int_Menu()
+  
+  PatternsToMemory(level)
+  
+  ShowPattern(level)
+
+  Game()
 
 end_maingame:
+  
+int_Menu:
+  allLightsAtOnce()
 
-menu:
+  int level = 0;
+  while(level == 0)
+  {
+    LED3 = on
+    wait(2)
+    if(buttonPressed())
+    {
+      level = 1
+    }
 
-outputpattern:
-  LDR     R4, =GPIOE_MODER
-  LDR     R5, [R4]
-  BIC     R5, #(0b11<<(LD3_PIN*2))      @ Modify ...
-  ORR     R5, #(0b01<<(LD3_PIN*2))      @ write 01 to bits 
-  STR     R5, [R4]                      @ Write
-  LDR     R5, [R4]
-  BIC     R5, #(0b11<<(LD3_PIN*2))      @ Modify ...
-  ORR     R5, #(0b01<<(LD3_PIN*2))      @ write 01 to bits 
-  STR     R5, [R4]                      @ Write  
+    LED4 = on
+    wait(2)
+    if(buttonPressed())
+    {
+      level = 2
+    }
+
+    LED5 = on
+    wait(2)
+    if(buttonPressed())
+    {
+      level = 3
+    }
+
+    LED6 = on
+    wait(2)
+    if(buttonPressed())
+    {
+      level = 4
+    }
+
+    LED7 = on
+    wait(2)
+    if(buttonPressed())
+    {
+      level = 5
+    }
+
+    LED8 = on
+    wait(2)
+    if(buttonPressed())
+    {
+      level = 6
+    }
+
+    LED9 = on      
+    wait(2)
+    if(buttonPressed())
+    {
+      level = 7
+    }
+
+    LED10 = on
+    wait(2)
+    if(buttonPressed())
+    {
+      level = 8
+    }
+
+    return level
+  }
+
+PatternsToMemory(level):
+  int i = 0;
+  if(level == 1)
+    // Pattern for Level 1
+    word.pattern[address + i] == LED3
+    i += 4
+    word.pattern[address + i] == LED8
+    i += 4
+    word.pattern[address + i] == LED9
+    i += 4
+    word.pattern[address + i] == LED7
+    i += 4
+    word.pattern[address + i] == 0x00 //end of pattern
+
+  else if(level == 2)
+    // Pattern for Level 2 
+  else if(level == 3)
+    // Pattern for Level 3 
+  else if(level == 4)
+  else if(level == 5)
+  else if(level == 6)
+  else if(level == 7)
+  else if(level == 8)
+  
+ShowPattern:
+
+while(pattern != 0x00)
+  if(pattern == LED3)
+    LED3 = on
+    wait(2)
+    LED3 = off
+  else if(pattern == LED4)
+    LED4 = on
+    wait(2)
+    LED4 = off
+  else if(pattern == LED5)
+    LED5 = on
+    wait(2)
+    LED5 = off
+  else if(pattern == LED6)
+    LED6 = on
+    wait(2)
+    LED6 = off
+  else if(pattern == LED7)
+    LED7 = on
+    wait(2)
+    LED7 = off
+  else if(pattern == LED8)
+    LED8 = on
+    wait(2)
+    LED8 = off
+  else if(pattern == LED9)
+    LED9 = on
+    wait(2)
+    LED9 = off
+  else if(pattern == LED10)
+    LED10 = on
+    wait(2)
+    LED10 = off
+
+Game:
+  int time = 2
+  int index = 0
+  boolean gameOver = false;
+
+  while(pattern[index] != 0x00 || gameOver )
+  {
+    LED3 = on
+    wait(time)
+    if(buttonPressed() && pattern[index] == LED3)
+    {
+      i += 4 
+    }
+    else
+    {
+      gameOver == true;
+    }
+
+    LED4 = on
+    wait(time)
+    if(buttonPressed() && pattern[index] == LED4)
+    {
+      i += 4 
+    }
+    else
+    {
+      gameOver == true;
+    }
+
+    LED5 = on
+    wait(time)
+    if(buttonPressed() && pattern[index] == LED5)
+    {
+      i += 4 
+    }
+    else
+    {
+      gameOver == true;
+    }
+
+    LED6 = on
+    wait(time)
+    if(buttonPressed() && pattern[index] == LED6)
+    {
+      i += 4 
+    }
+    else
+    {
+      gameOver == true;
+    }
+
+    LED7 = on
+    wait(time)
+    if(buttonPressed() && pattern[index] == LED7)
+    {
+      i += 4 
+    }
+    else
+    {
+      gameOver == true;
+    }
+
+    LED8 = on
+    wait(time)
+    if(buttonPressed() && pattern[index] == LED8)
+    {
+      i += 4 
+    }
+    else
+    {
+      gameOver == true;
+    }
+
+    LED9 = on      
+    wait(time)
+    if(buttonPressed() && pattern[index] == LED9)
+    {
+      i += 4
+    }
+    else
+    {
+      gameOver == true;
+    }
+
+    LED10 = on
+    wait(time)
+    if(buttonPressed() && pattern[index] == LED10)
+    {
+      i += 4 
+    }
+    else
+    {
+      gameOver == true;
+    }
+
+    return level
+  }
+
+GameOver:
+  // blink red orange leds
+
