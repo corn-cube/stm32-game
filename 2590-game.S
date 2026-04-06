@@ -551,6 +551,7 @@ ShowPattern:
 Game:
   PUSH {R4-R12, LR}
 
+  @ resets the button flag
   LDR   R6, =button_flag
   MOV   R5, #0
   STR   R5, [R6]
@@ -583,6 +584,14 @@ Game:
   CMP   R9, #0
   BGT   .LWhileGameTimer  
 
+
+@ if no button pressed then continue iterating
+.LContinue:
+  BIC   R5, R10
+  STR   R5, [R4]
+  ADD   R11, R11, #1
+  B     .LWhileLEDs
+
 @ if button pressed
 .LHandlePress:
   MOV   R8, #0
@@ -593,13 +602,6 @@ Game:
   BEQ   .LPatternMatch    @ correct press
   BL    gameOver
   B     .LGameOver        @ wrong press
-
-@ if no button pressed then continue iterating
-.LContinue:
-  BIC   R5, R10
-  STR   R5, [R4]
-  ADD   R11, R11, #1
-  B     .LWhileLEDs
 
 .LPatternMatch:                 @     else
                                 @     {
@@ -655,7 +657,7 @@ gameOver:
 
     BIC   R5, R10                @ turn LED off
     STR   R5, [R4]
-    
+
     LDR   R7, =500000            @ delay ~1s
 
 @ off for 1 secpnd
