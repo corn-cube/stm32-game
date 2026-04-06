@@ -207,7 +207,7 @@ PatternsToMemory:
   PUSH {LR, R4-R12}
 
   MOV   R12, #0                  @ int index = 0;
-  MOV   R4, R0          @ pattern.address = 0x20000000
+  MOV   R4, R0                   @ pattern.address = 0x20000000
   MOV   R5, R1                   @ level = level
   
   CMP   R5, #1                   @ if(level == 1)
@@ -551,39 +551,88 @@ ShowPattern:
 Game:
   PUSH {R4-R12, LR}
   
+  MOV   R12, R0                 
+
 .LWhileGame:                    @ while(pattern[index] != 0x00 || !gameOver )
   MOV   R11, #8                 @   int i = 8
+
 .LWhileLEDs:                    @   while (i < 16)
+
   CMP   R11, #16
   BGE   .LWhileGame
 
+@ if ( targetLED == 0x00) break;
+  LDR   R6, [R0]                @ load next target LED
+  CMP   R6, #0
+  BEQ   .LGameOver              @ if 0x00, pattern complete
+
   MOV   R10, #0b1             @     mask = #0b1
+  LSL   R10, R10, R11
   LDR   R4, =GPIOE_ODR           
   LDR   R5, [R4]
-  LSL   R10, R10, R11
-  ORR   R5, R10
+  ORR   R5, R5, R10
   STR   R5, [R4]                @     LED[i] = on
 
   LDR   R9, =1000000            @     timer = 1000000
+
 .LWhileGameTimer:               @     while(timer != = )
   SUB   R9, R9, #1              @       timer--
-  CMP   R9, #0
-  BGT   .LWhileGameTimer        
 
-  LDR   R6, [R0]                @     int patternValue = pattern[value]
-  CMP   R6, R11                 @     if(buttonPressed() && pattern[index] != LED3)
-  BEQ   .LPatternMatch          
-  B     .LGameOver              @     {  gameOver == true }
-.LPatternMatch:                 @     else
-                                @     {
-  ADD   R0, R0, #4              @       index += 4
-  BIC   R5, R10                 @        
-  STR   R5, [R4]                @       LED[i] = off
-  LDR   R8, =0x8800             
-  STR   R8, [R4]                @       blinkGreenLeds()
-                                @     }
-  
-  ADD   R11, R11, #1            @     i++
+  @ check button during delay
+  LDR   R7, =button_flag
+  LDR   R8, [R7]
+  CMP   R8, #0
+  BEQ   .LNoPress
+
+  @ if button pressed
+  MOV   R8, #0
+  STR   R8, [R7]                
+
+  @ compare target pin to currently lit LED pin
+  CMP   R6, R11
+  BEQ   .LCorrectButtonPress    @ correct press
+  BL    gameOver
+  B     .LGameOver              @ wrong press
+
+.LNoPress
+  CMP   R9, #0
+  BGT   .LWhileGameTimer  
+
+
+@ if no button pressed, turn off current LED and move on to next
+  BIC   R5, R5, R10
+  STR   R5, [R4]
+  ADD   R11, R11, #1
+  B     .LWhileLEDs
+
+
+.LCorrectButtonPress:                 @     else
+                                 @     {
+  ADD   R0, R0, #4               @       index += 4
+
+  BIC   R5, R5, R10              @        
+  STR   R5, [R4]                 @       LED[i] = off
+
+@ blink LEDs green
+  LDR   R8, =0x8800 
+  LDR   R6, [R4]
+  ORR   R6, R6, R8            
+  STR   R8, [R4]                 @       blinkGreenLeds()
+                                 @     }
+  LDR   R9, =500000              @ delay
+
+@ makes the green LED blink once indicate a correct press 
+.LGreenBlinkDelay:
+  SUBS  R9, R9, #1
+  BNE  .LGreenBlinkDelay
+
+   BIC  R6, R6, R8        @ Turn off green LEDs
+   STR  R6, [R4]
+
+  @ resets the button flag
+  LDR   R6, =button_flag
+  MOV   R5, #0
+  STR   R5, [R6]
 
   B     .LWhileLEDs
 
@@ -602,7 +651,41 @@ Game:
 @   Program termination 
 gameOver:
   PUSH {R4-R12, LR}
-  @ // blink red orange leds
+
+  LDR   R4, =GPIOE_ODR           @ GPIOE output data register
+  MOV   R6, #3                   @ numberOfBlinks = 3;
+
+.LBlinkLoop:
+    MOV   R10, #0b1            @ LED mask
+    LSL   R10, R10, #9           @ shift to LED3/bit 9 (red/orange LED)
+    LDR   R5, [R4]               @ current GPIO state
+    ORR   R5, R5, R10            @ turn LED on
+    STR   R5, [R4]               @ LED on
+
+    LDR   R7, =500000            @ delay ~1s
+
+@ on for 1 second
+.DelayOn:
+    SUBS  R7, R7, #1
+    BNE   .DelayOn
+
+    BIC   R5, R10                @ turn LED off
+    STR   R5, [R4]
+
+    LDR   R7, =500000            @ delay ~1s
+
+@ off for 1 secpnd
+.DelayOff:
+    SUBS  R7, R7, #1
+    BNE   .DelayOff
+
+    SUBS  R6, R6, #1             @ numberOfBlinks -= 1;
+    BNE   .LBlinkLoop            @ repeat if not zero
+
+  @ turn off all LEDs at the end
+  MOV  R5, #0
+  STR  R5, [R4]
+
   POP {R4-R12, LR}
 
 
@@ -649,10 +732,9 @@ EXTI0_IRQHandler:
 
   PUSH  {R4,R5,LR}
 
-  LDR   R4, =button_count           @ count = count + 1
-  LDR   R5, [R4]                    @
-  ADD   R5, R5, #1                  @
-  STR   R5, [R4]                    @
+  LDR   R4, =button_flag
+  MOV   R5, #1
+  STR   R5, [R4]
 
   LDR   R4, =EXTI_PR                @ Clear (acknowledge) the interrupt
   MOV   R5, #(1<<0)                 @
@@ -666,7 +748,10 @@ EXTI0_IRQHandler:
   
 button_count:
   .space  4
-
+  
+button_flag:
+  .space 4
+  
 blink_countdown:
   .space  4
 
