@@ -1,0 +1,1 @@
+nasm -f 2590-game.S
